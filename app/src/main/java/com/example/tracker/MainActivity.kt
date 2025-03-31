@@ -27,13 +27,8 @@ class MainActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val tracker = CalorieTracker()
-        val currentDate = LocalDateTime.now()
-        tracker.addItem(Food("Snickers", currentDate, 200))
-        tracker.addItem(Food("Banana", currentDate, 40))
-        tracker.addItem(Food("Bread", currentDate, 70))
         setContent {
-            TrackerTheme {
+            TrackerTheme(darkTheme = true) {
                 MainScreen(viewModel)
             }
         }

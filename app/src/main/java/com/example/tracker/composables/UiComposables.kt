@@ -2,6 +2,7 @@ package com.example.tracker.composables
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -26,17 +30,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.example.tracker.DataBase.FoodEntry
 import com.example.tracker.DataBase.TrackerViewModel
+import com.example.tracker.classes.Food
+import com.example.tracker.utilities.readFoodsJson
 import java.time.LocalDateTime
 
 @Composable
 fun MainScreen(viewModel: TrackerViewModel) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        FoodInputButton(viewModel)
-        Spacer(modifier = Modifier.height(16.dp))
-        FoodList(viewModel)
+    Surface(
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            FoodInputButton(viewModel)
+            Spacer(modifier = Modifier.height(16.dp))
+            FoodList(viewModel)
+        }
     }
 }
 
@@ -44,7 +56,8 @@ fun MainScreen(viewModel: TrackerViewModel) {
 fun FoodList(viewModel: TrackerViewModel) {
     val foods by viewModel.entries.collectAsState()
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(foods) { food ->
             TwoItemRow(food, viewModel)
@@ -56,15 +69,21 @@ fun FoodList(viewModel: TrackerViewModel) {
 fun TwoItemRow(food: FoodEntry, viewModel: TrackerViewModel) {
     var confirmDelete by remember { mutableStateOf<FoodEntry?>(null) } // Track item for deletion
 
-    Row(
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        tonalElevation = 10.dp,
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
             .clickable { confirmDelete = food },
-        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = food.name)
-        Text(text = food.calories.toString())
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = food.name)
+            Text(text = food.calories.toString())
+        }
     }
 
     confirmDelete?.let { item ->
@@ -88,9 +107,9 @@ fun ConfirmDeleteDialog(item: FoodEntry, onConfirm: () -> Unit, onDismiss: () ->
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 tonalElevation = 6.dp,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(8.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Text("Confirm Deletion", style = MaterialTheme.typography.titleLarge)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
@@ -115,11 +134,14 @@ fun ConfirmDeleteDialog(item: FoodEntry, onConfirm: () -> Unit, onDismiss: () ->
 @Composable
 fun FoodInputButton(viewModel: TrackerViewModel) {
     var showDialog by remember { mutableStateOf(false) }
-    var textInput by remember { mutableStateOf("") }
-    var numberInput by remember { mutableStateOf("") }
+    var searchText by remember { mutableStateOf("") }
+    val foodOptions = readFoodsJson(LocalContext.current, "foods.json")
+    val filteredOptions = foodOptions.filter { it.name.contains(searchText, ignoreCase = true) }
 
     Column {
-        Button(onClick = { showDialog = true }) {
+        Button(onClick = { showDialog = true },
+            modifier = Modifier
+                .fillMaxWidth()) {
             Text("Add food")
         }
 
@@ -133,36 +155,27 @@ fun FoodInputButton(viewModel: TrackerViewModel) {
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Enter food data", style=MaterialTheme.typography.titleLarge)
+                            Text("Add food", style=MaterialTheme.typography.titleLarge)
                             Spacer(modifier = Modifier.height(8.dp))
 
                             TextField(
-                                value = textInput,
-                                onValueChange = { textInput = it },
-                                label = { Text("food's name")}
+                                value = searchText,
+                                onValueChange = { searchText = it },
+                                label = { Text("Search Food")}
                             )
                             Spacer(modifier = Modifier.height(8.dp))
-                            TextField(
-                                value = numberInput,
-                                onValueChange = { if (it.all { c -> c.isDigit() }) numberInput = it },
-                                label = { Text("calories")}
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                TextButton (onClick = {showDialog = false}) {
-                                    Text("Cancel")
-                                }
-                                TextButton(onClick = {
-                                    viewModel.saveToDatabase(textInput, LocalDateTime.now().toString(), numberInput.toInt())
-                                    showDialog = false}) {
-                                    Text("Save")
+                            filteredOptions.forEach { food ->
+                                Surface(
+                                    tonalElevation = 3.dp,
+                                    modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {    viewModel.saveToDatabase(food.name, food.date.toString(), food.calories)
+                                                    showDialog = false } ){
+                                    Text(
+                                        text = food.name
+                                    )
                                 }
                             }
-
                         }
                     }
                 }
