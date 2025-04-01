@@ -4,30 +4,51 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.room.Room
+import com.example.tracker.classes.Food
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
 
 class TrackerViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = AppDatabase.getDatabase(application)
-    private val dao = db.foodDao()
+    //private val db = AppDatabase.getDatabase(application)
+    private val db = Room.databaseBuilder(
+        application,
+        AppDatabase::class.java, "your_database_name"
+    ).fallbackToDestructiveMigration().build()
+    private val foodDao = db.foodDao()
+    private val profileDao = db.profileDao()
 
-    val entries: StateFlow<List<FoodEntry>> = dao.getALLEntries()
+    val foodsInDatabase: StateFlow<List<FoodEntry>> = foodDao.getALLEntries()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    fun saveToDatabase(text: String, date: String, calories: Int) {
+    val calorieGoalInDatabase: StateFlow<Int> = profileDao.getCalorieGoal()
+        .stateIn(viewModelScope, SharingStarted.Lazily, 2000 )
+
+    fun saveFood(food: Food) {
         viewModelScope.launch {
-            dao.insert(FoodEntry(name = text, date = date, calories = calories))
+            foodDao.insert(FoodEntry(name = food.name, date = food.date.toString(), calories = food.calories))
         }
     }
 
-    fun deleteItem(item: FoodEntry) {
+    fun deleteFood(item: FoodEntry) {
         viewModelScope.launch {
-            dao.delete(item)
+            foodDao.delete(item)
         }
+    }
+
+    fun saveProfile(calorieGoal: Int) {
+        viewModelScope.launch {
+            profileDao.saveProfile(ProfileEntry(calorieGoal = calorieGoal))
+        }
+    }
+
+    fun getProfile() = liveData {
+        emit(profileDao.getProfile())
     }
 }
 

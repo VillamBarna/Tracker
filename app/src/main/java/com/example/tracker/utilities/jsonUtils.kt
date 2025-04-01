@@ -3,7 +3,7 @@ package com.example.tracker.utilities
 import android.content.Context
 import com.example.tracker.classes.Food
 import org.json.JSONArray
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 fun readJsonArrayFromAssets(context: Context, fileName: String): JSONArray {
     val file  = context.assets.open(fileName).bufferedReader().use { it.readText()}
@@ -16,7 +16,7 @@ fun readFoodsJson(context: Context, fileName: String): List<Food> {
     val jsonOfFoods = readJsonArrayFromAssets(context, fileName)
     for (i in 0 until jsonOfFoods.length()) {
         val jsonFood = jsonOfFoods.getJSONObject(i)
-        listOfFoods.add(Food(jsonFood.getString("name"), LocalDateTime.now(), jsonFood.getInt("calories")))
+        listOfFoods.add(Food(jsonFood.getString("name"), LocalDate.now(), jsonFood.getInt("calories")))
     }
     return listOfFoods
 }

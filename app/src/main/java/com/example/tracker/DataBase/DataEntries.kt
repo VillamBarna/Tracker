@@ -11,3 +11,9 @@ data class FoodEntry(
     val calories: Int,
     val date: String
 )
+
+@Entity(tableName = "profiles")
+data class ProfileEntry(
+    @PrimaryKey val id: Int = 1,
+    val calorieGoal: Int = 2000
+)

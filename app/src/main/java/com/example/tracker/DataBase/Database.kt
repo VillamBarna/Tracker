@@ -5,9 +5,10 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [FoodEntry::class], version = 1, exportSchema = false)
+@Database(entities = [FoodEntry::class, ProfileEntry::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun foodDao(): FoodDao
+    abstract fun profileDao(): ProfileDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

@@ -14,3 +14,15 @@ interface FoodDao {
     @Delete
     suspend fun delete(item: FoodEntry)
 }
+
+@Dao
+interface ProfileDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveProfile(profile: ProfileEntry)
+
+    @Query("SELECT * FROM profiles WHERE id = 1 LIMIT 1")
+    fun getProfile(): ProfileEntry?
+
+    @Query("SELECT calorieGoal FROM profiles WHERE id = 1 LIMIT 1")
+    fun getCalorieGoal(): Flow<Int>
+}

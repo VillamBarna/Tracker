@@ -1,5 +1,5 @@
 package com.example.tracker.classes
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 
-abstract class ItemBase(val name: String, val date: LocalDateTime)
+abstract class ItemBase(val name: String, var date: LocalDate)
